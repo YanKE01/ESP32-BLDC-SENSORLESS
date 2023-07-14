@@ -4,5 +4,12 @@
   "idf.openOcdConfigs": [
     "interface/ftdi/esp32_devkitj_v1.cfg",
     "target/esp32s3.cfg"
-  ]
+  ],
+  "files.associations": {
+    "app_bldc.h": "c",
+    "gpio.h": "c",
+    "app_variable.h": "c"
+  },
+  "idf.port": "/dev/ttyUSB0",
+  "idf.flashType": "UART"
 }
