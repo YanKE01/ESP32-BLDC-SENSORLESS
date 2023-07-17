@@ -8,8 +8,10 @@
   "files.associations": {
     "app_bldc.h": "c",
     "gpio.h": "c",
-    "app_variable.h": "c"
+    "app_variable.h": "c",
+    "hal_bldc.h": "c",
+    "app_pid.h": "c"
   },
-  "idf.port": "/dev/ttyUSB0",
+  "idf.port": "/dev/ttyACM0",
   "idf.flashType": "UART"
 }

@@ -3,9 +3,9 @@
 
 MotorParameter motorParameter;
 
-void VariableInit(void)
+void app_variable_init(void)
 {
-    motorParameter.dir = CCW; // 默认顺时针
+    motorParameter.dir = CW; // 默认顺时针 CW顺时针 CCW逆时针
     motorParameter.hallState = 0;
     motorParameter.pwmDuty = 0;
     motorParameter.isStart = 0;

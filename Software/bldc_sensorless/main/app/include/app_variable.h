@@ -27,4 +27,6 @@ typedef struct
 
 extern MotorParameter motorParameter;
 
+void app_variable_init(void);
+
 #endif
