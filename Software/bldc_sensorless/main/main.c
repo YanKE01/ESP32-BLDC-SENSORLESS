@@ -18,7 +18,7 @@ static void button_single_click_cb(void *arg, void *data)
 {
     motorParameter.isStart = !motorParameter.isStart;
 
-    ESP_LOGI(TAG, "STATE:%d", motorParameter.isStart);
+    ESP_LOGI(TAG, "BTN___STATE:%d", motorParameter.isStart);
 }
 /**
  * @description: bldc main loop
@@ -28,30 +28,29 @@ static void button_single_click_cb(void *arg, void *data)
 static void periodic_timer_callback(void *arg)
 {
     hal_bldc_main_loop();
-    if (simpleOpen.runStep == 3 && motorParameter.isStart == START && hallLessParameter.stableFlag)
+    if (simpleOpen.runStep == 3 && motorParameter.isStart == START)
     {
         // 当前已经进入无感状态 应该等到速度稳定后介入PID控制
 
-        motor_pwm_s = app_pid_operation(&speedPid, hallLessParameter.speedRpm);
+        // motor_pwm_s = app_pid_operation(&speedPid, hallLessParameter.speedRpm);
 
-        /* 最低速度限制 */
-        if (motor_pwm_s > -200 && motor_pwm_s <= 0)
-        {
-            motor_pwm_s = -200;
-        }
-        else if (motor_pwm_s < 200 && motor_pwm_s > 0)
-        {
-            motor_pwm_s = 200;
-        }
+        // /* 最低速度限制 */
+        // if (motor_pwm_s > -200 && motor_pwm_s <= 0)
+        // {
+        //     motor_pwm_s = -200;
+        // }
+        // else if (motor_pwm_s < 200 && motor_pwm_s > 0)
+        // {
+        //     motor_pwm_s = 200;
+        // }
 
-        motorParameter.pwmDuty = abs(motor_pwm_s);
+        // motorParameter.pwmDuty = abs(motor_pwm_s);
     }
 }
 
 static void app_task(void *args)
 {
     static uint8_t log_count = 0;
-    static int speedPrev = 0;
     while (1)
     {
         // 打印日志
@@ -66,15 +65,29 @@ static void app_task(void *args)
         }
 
         // 判断速度是否稳定
-        if (motorParameter.isStart == START && simpleOpen.runStep == 3 && hallLessParameter.stableFlag == 0)
-        {
-            if (abs(speedPrev - hallLessParameter.speedRpm) <= 5)
-            {
-                hallLessParameter.stableFlag = 1;
-                ESP_LOGI(TAG, "Error:%.2f,P:%.2f,I:%.2f", speedPid.Error, speedPid.Up, speedPid.Ui);
-            }
-            speedPrev = hallLessParameter.speedRpm;
-        }
+        // if (motorParameter.isStart == START && simpleOpen.runStep == 3 && hallLessParameter.stableFlag < 2)
+        // {
+        //     if (abs(speedPrev - hallLessParameter.speedRpm) <= 5)
+        //     {
+        //         hallLessParameter.stableFlag++;
+        //         ESP_LOGI(TAG, "--------Enter Stable-------------");
+        //     }
+        //     speedPrev = hallLessParameter.speedRpm;
+        // }
+
+        // if (hallLessParameter.stableFlag)
+        // {
+        //     change_count++;
+        //     if (change_count == 100)
+        //     {
+        //         if (speedPid.SetPoint < 500)
+        //         {
+        //             speedPid.SetPoint += 50;
+        //         }
+
+        //         change_count = 0;
+        //     }
+        // }
         vTaskDelay(100 / portTICK_PERIOD_MS);
     }
 }

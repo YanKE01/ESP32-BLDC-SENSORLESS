@@ -271,49 +271,49 @@ void hal_bldc_change_voltage()
     switch (simpleOpen.voltageChangeCount)
     {
     case 1:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 4;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 10;
         break;
     case 2:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 4;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 10;
         break;
     case 3:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 4;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 9;
         break;
     case 4:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 4;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 9;
         break;
     case 5:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 4;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 8;
         break;
     case 6:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 3;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 8;
         break;
     case 7:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 3;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 8;
         break;
     case 8:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 3;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 8;
         break;
     case 9:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 3;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 6;
         break;
     case 10:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 3;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 6;
         break;
     case 11:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 2;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 6;
         break;
     case 12:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 2;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 5;
         break;
     case 13:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 2;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 5;
         break;
     case 14:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 2;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 5;
         break;
     case 15:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 2;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 5;
         break;
     default:
         break;
@@ -466,7 +466,7 @@ uint8_t hal_bldc_sensor_less_operation(void)
     if (hallLessParameter.filterEdge == 0)
     {
         // 说明从1->0,开始统计过零时间
-        if (zeroStableFlag >= 8)
+        if (zeroStableFlag >= 4)
         {
             if (motorParameter.dir == CCW)
             {
@@ -506,11 +506,11 @@ uint8_t hal_bldc_sensor_less_operation(void)
     }
 
     // 过零控制
-    if (zeroStableFlag >= 10)
+    if (zeroStableFlag >= 4)
     {
         static int filterCount = 0;
         // 稳定的过零信号
-        zeroStableFlag = 10;
+        zeroStableFlag = 4;
         edgeFlag++; // 稳定后,旋转两圈进入控制
 
         if (edgeFlag >= 2)
@@ -520,6 +520,7 @@ uint8_t hal_bldc_sensor_less_operation(void)
 
             if (hallLessParameter.hallLessValue <= 0 || hallLessParameter.hallLessValue > 6)
             {
+                printf("-------------ERROR-------------------\n");
                 return 0;
             }
 
@@ -567,7 +568,7 @@ void hal_bldc_main_loop(void)
             motorParameter.pwmDuty = motorParameter.maxDuty / 8;
             hal_UphaseH_VphaseL(); // 固定到这一项
             simpleOpen.delayCount = 0;
-            simpleOpen.nextPhaseTime = 800; // 假设值(需要调试),相与相之间切换的时间，没有进入无感状态时
+            simpleOpen.nextPhaseTime = 500; // 假设值(需要调试),相与相之间切换的时间，没有进入无感状态时
             simpleOpen.runStep = 1;
             simpleOpen.voltageChangeCount = 0; // 用于开环调节电压
             zeroStableFlag = 0;                // 清除过零标志位
@@ -628,6 +629,7 @@ void hal_bldc_main_loop(void)
         simpleOpen.voltageChangeCount = 0;
         hallLessParameter.stableFlag = 0;
         speedPid.Ui = 0;
+        speedPid.SetPoint = 300;
         hal_flag_led(0);
     }
 }

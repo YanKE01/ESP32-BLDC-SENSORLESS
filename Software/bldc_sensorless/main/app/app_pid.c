@@ -11,7 +11,7 @@ PID_TypeDef speedPid;
 
 void app_pid_init()
 {
-    speedPid.SetPoint = 800.0f;  // 目标值
+    speedPid.SetPoint = 300.0f;  // 目标值
     speedPid.ActualValue = 0.0f; // pid运算值
     speedPid.Ui = 0.0f;
     speedPid.Up = 0.0f;
