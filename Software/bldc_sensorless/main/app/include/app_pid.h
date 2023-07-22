@@ -27,6 +27,17 @@ typedef struct
 
 extern PID_TypeDef speedPid;
 
-int app_pid_operation(PID_TypeDef *PID, float currentVale);
+/**
+ * @description: pid初始化
+ * @return {*}
+ */
 void app_pid_init();
+
+/**
+ * @description: pid运算
+ * @param {PID_TypeDef} *PID
+ * @param {float} currentVale
+ * @return {*}
+ */
+int app_pid_operation(PID_TypeDef *PID, float currentVale);
 #endif

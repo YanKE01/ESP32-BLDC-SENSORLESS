@@ -271,49 +271,49 @@ void hal_bldc_change_voltage()
     switch (simpleOpen.voltageChangeCount)
     {
     case 1:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 10;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 4;
         break;
     case 2:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 10;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 4;
         break;
     case 3:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 9;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 4;
         break;
     case 4:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 9;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 4;
         break;
     case 5:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 8;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 4;
         break;
     case 6:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 8;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 4;
         break;
     case 7:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 8;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 3;
         break;
     case 8:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 8;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 3;
         break;
     case 9:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 6;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 3;
         break;
     case 10:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 6;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 3;
         break;
     case 11:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 6;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 3;
         break;
     case 12:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 5;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 2;
         break;
     case 13:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 5;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 2;
         break;
     case 14:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 5;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 2;
         break;
     case 15:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 5;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 2;
         break;
     default:
         break;
@@ -397,6 +397,12 @@ void hal_bldc_test(void)
     motorParameter.pwmDuty = 0;
 }
 
+/**
+ * @description: emf软件滤波器
+ * @param {int} *valueLpf
+ * @param {int} value
+ * @return {*}
+ */
 void hal_bldc_lpf(int *valueLpf, int value)
 {
     static int valuePrev = 0;
@@ -406,6 +412,11 @@ void hal_bldc_lpf(int *valueLpf, int value)
     valuePrev = *valueLpf;
 }
 
+/**
+ * @description: emf边沿监测
+ * @param {uint8_t} val
+ * @return {*}
+ */
 uint8_t hal_bldc_umef_edge(uint8_t val)
 {
     /* 主要是检测val信号从0 - 1 在从 1 - 0的过程，即高电平所持续的过程 */
@@ -415,9 +426,13 @@ uint8_t hal_bldc_umef_edge(uint8_t val)
         oldval = val;
 
         if (val == 0)
+        {
             return 0;
+        }
         else
+        {
             return 1;
+        }
     }
 
     return 2;
@@ -499,9 +514,14 @@ uint8_t hal_bldc_sensor_less_operation(void)
 
         if (hallLessParameter.filterFailedCount > 15000)
         {
-            // 一直没有变化，说明速度为0
+            // 反电势一直没有变化，说明已经堵转或者异常
             hallLessParameter.filterFailedCount = 0;
             hallLessParameter.speedRpm = 0;
+            motorParameter.pwmDuty = 0;
+            motorParameter.isStart = STOP; // 电机停止
+            hal_bldc_stop();
+            motorParameter.lock = 1; // 堵转标志成立
+            hal_flag_led(0);
         }
     }
 
@@ -520,7 +540,6 @@ uint8_t hal_bldc_sensor_less_operation(void)
 
             if (hallLessParameter.hallLessValue <= 0 || hallLessParameter.hallLessValue > 6)
             {
-                printf("-------------ERROR-------------------\n");
                 return 0;
             }
 
@@ -568,7 +587,7 @@ void hal_bldc_main_loop(void)
             motorParameter.pwmDuty = motorParameter.maxDuty / 8;
             hal_UphaseH_VphaseL(); // 固定到这一项
             simpleOpen.delayCount = 0;
-            simpleOpen.nextPhaseTime = 500; // 假设值(需要调试),相与相之间切换的时间，没有进入无感状态时
+            simpleOpen.nextPhaseTime = 900; // 假设值(需要调试),相与相之间切换的时间，没有进入无感状态时
             simpleOpen.runStep = 1;
             simpleOpen.voltageChangeCount = 0; // 用于开环调节电压
             zeroStableFlag = 0;                // 清除过零标志位
@@ -609,7 +628,7 @@ void hal_bldc_main_loop(void)
             {
                 simpleOpen.nextPhaseCount = 0; // 新的一轮六步换相
             }
-            hal_bldc_six_step_operation(); // 开环强脱的六部换向
+            hal_bldc_six_step_operation(); // 开环强托的六部换向
             break;
         case 3:
             hal_flag_led(1);
@@ -628,8 +647,10 @@ void hal_bldc_main_loop(void)
         simpleOpen.nextPhaseCount = 0;
         simpleOpen.voltageChangeCount = 0;
         hallLessParameter.stableFlag = 0;
+        hallLessParameter.filterFailedCount = 0;
         speedPid.Ui = 0;
-        speedPid.SetPoint = 300;
+        speedPid.SetPoint = 400.0f;
+        motorParameter.changeIndex = 0;
         hal_flag_led(0);
     }
 }

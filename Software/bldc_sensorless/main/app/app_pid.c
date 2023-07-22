@@ -9,9 +9,13 @@ PID_TypeDef speedPid;
         (var) = (var) < (min) ? (min) : (var); \
     }
 
+/**
+ * @description: pid初始化
+ * @return {*}
+ */
 void app_pid_init()
 {
-    speedPid.SetPoint = 300.0f;  // 目标值
+    speedPid.SetPoint = 400.0f;  // 目标值
     speedPid.ActualValue = 0.0f; // pid运算值
     speedPid.Ui = 0.0f;
     speedPid.Up = 0.0f;
@@ -20,10 +24,16 @@ void app_pid_init()
     speedPid.Integral = KI;                             // 积分项输出
     speedPid.IngMax = 1.0f * motorParameter.maxDuty;    // 限制积分输出
     speedPid.IngMin = -1.0f * motorParameter.maxDuty;   // 限制积分输出
-    speedPid.OutMax = 0.9f * (motorParameter.maxDuty);  // 限制PID输出
-    speedPid.OutMin = -0.9f * (motorParameter.maxDuty); // 限制PID输出
+    speedPid.OutMax = 0.7 * (motorParameter.maxDuty);   // 限制PID输出
+    speedPid.OutMin = -0.7f * (motorParameter.maxDuty); // 限制PID输出
 }
 
+/**
+ * @description: pid运算
+ * @param {PID_TypeDef} *PID
+ * @param {float} currentVale
+ * @return {*}
+ */
 int app_pid_operation(PID_TypeDef *PID, float currentVale)
 {
     if (motorParameter.dir == CW && currentVale < 0)

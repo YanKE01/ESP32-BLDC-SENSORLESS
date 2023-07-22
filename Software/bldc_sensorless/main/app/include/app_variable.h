@@ -23,6 +23,8 @@ typedef struct
     uint8_t dir;        // 方向
     uint8_t isStart;    // 是否启动
     uint16_t maxDuty;   // 最大占空比
+    uint8_t lock;       // 堵转标志位
+    int changeIndex;    // 调整索引
 } MotorParameter;
 
 extern MotorParameter motorParameter;
