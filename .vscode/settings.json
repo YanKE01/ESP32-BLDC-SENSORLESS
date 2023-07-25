@@ -9,6 +9,11 @@
         "hal_btn.h": "c",
         "app_wind.h": "c",
         "esp_log.h": "c",
-        "app_pid.h": "c"
+        "app_pid.h": "c",
+        "esp_wifi.h": "c",
+        "app_rmaker.h": "c",
+        "app_wifi.h": "c",
+        "esp_rmaker_common_events.h": "c",
+        "random": "c"
     }
 }

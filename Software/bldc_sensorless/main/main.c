@@ -8,6 +8,8 @@
 #include "app_wind.h"
 #include "app_variable.h"
 #include "app_pid.h"
+#include "app_rmaker.h"
+#include "app_wifi.h"
 #include "hal_btn.h"
 #include "hal_bldc.h"
 
@@ -56,9 +58,13 @@ static void app_task(void *args)
         // 打印日志
         if (motorParameter.isStart == START && simpleOpen.runStep == 3)
         {
-            // ESP_LOGI(TAG, "System Speed:%d,Target Speed:%.2f,duty:%lu", hallLessParameter.speedRpm, speedPid.SetPoint, motorParameter.pwmDuty);
-            // ESP_LOGI(TAG, "Error:%.2f,P:%.2f,I:%.2f", speedPid.Error, speedPid.Up, speedPid.Ui);
-            // printf("PID:%.2f,%d\n", speedPid.SetPoint, abs(hallLessParameter.speedRpm));
+            log_count++;
+            if (log_count == 100)
+            {
+                log_count = 0;
+                ESP_LOGI(TAG, "System Speed:%d,Target Speed:%.2f,duty:%lu", hallLessParameter.speedRpm, speedPid.SetPoint, motorParameter.pwmDuty);
+                ESP_LOGI(TAG, "Error:%.2f,P:%.2f,I:%.2f", speedPid.Error, speedPid.Up, speedPid.Ui);
+            }
         }
 
         // 判断堵转标志是否成立
@@ -78,13 +84,7 @@ static void app_task(void *args)
         // 改变风速
         if (simpleOpen.runStep == 3 && motorParameter.isStart == START)
         {
-            if (change_count++ == 10)
-            {
-                change_count = 0; // 100ms修改一次转速
-                motorParameter.changeIndex++;
-                motorParameter.changeIndex %= 1000;
-                speedPid.SetPoint = app_generate_noisy_speed(400, 800, 100, motorParameter.changeIndex * 0.2f);
-            }
+            // speedPid.SetPoint = temp_speed;
         }
 
         vTaskDelay(10 / portTICK_PERIOD_MS);
@@ -93,6 +93,7 @@ static void app_task(void *args)
 
 void app_main(void)
 {
+    // app_rmaker_init();   // rainmaker初始化
     app_variable_init(); // 系统变量初始化
     app_pid_init();      // pid初始化
     hal_btn_init();      // 按键初始化
@@ -105,8 +106,8 @@ void app_main(void)
     };
     esp_timer_handle_t periodic_timer;
     ESP_ERROR_CHECK(esp_timer_create(&periodic_timer_args, &periodic_timer));
-    ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, 50)); // 20KHZ
+    ESP_ERROR_CHECK(esp_timer_start_periodic(periodic_timer, 100)); // 20KHZ
 
     // 应用层任务
-    xTaskCreate(app_task, "app_task", 1024 * 4, NULL, 5, NULL);
+    xTaskCreate(app_task, "app_task", 1024 * 4, NULL, 3, NULL);
 }
