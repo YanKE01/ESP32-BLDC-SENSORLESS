@@ -5,7 +5,6 @@
 #include "freertos/task.h"
 #include "freertos/semphr.h"
 #include "driver/gptimer.h"
-#include "driver/gpio.h"
 #include "esp_timer.h"
 #include "esp_log.h"
 #include "app_wind.h"
@@ -140,7 +139,7 @@ void app_main(void)
 {
 
     /* 外设初始化,软硬件. */
-    app_rmaker_init();   // rainmaker初始化
+    // app_rmaker_init();   // rainmaker初始化
     app_variable_init(); // 系统变量初始化
     app_pid_init();      // pid初始化
     hal_btn_init();      // 按键初始化

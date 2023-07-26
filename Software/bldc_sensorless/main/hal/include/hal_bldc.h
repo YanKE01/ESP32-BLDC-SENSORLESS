@@ -21,8 +21,7 @@
 #define _LEDC_DUTY (2048 - 1)            // Duty Max = 2^11 = 2048
 #define _LEDC_FREQUENCY (20 * 1000)      // Frequency in Hertz. Set frequency at 20 kHz
 
-typedef struct
-{
+typedef struct {
     /* data */
     int runStep;
     int delayCount;         // 延迟计数
@@ -31,8 +30,7 @@ typedef struct
     int voltageChangeCount; // 改变电压计数
 } SimpleOpen;
 
-typedef struct
-{
+typedef struct {
     /* data */
     uint8_t hallLessState[3];     // 三相反电动式状态
     uint16_t queueState[3];       // 三相滤波
@@ -44,6 +42,7 @@ typedef struct
     uint8_t hallLessValue;        // 三相反电势状态组合值
     uint8_t hallLessValuePrev;    // 三相反电势状态组合值,前一时刻
     int stableFlag;               // 稳定状态
+    int errorHallLessCount;       // 错误的无感计数
 } HallLessParameter;
 
 extern HallLessParameter hallLessParameter;
