@@ -36,8 +36,7 @@ void app_pid_init()
  */
 int app_pid_operation(PID_TypeDef *PID, int currentVale)
 {
-    if (motorParameter.dir == CW && currentVale < 0)
-    {
+    if (motorParameter.dir == CW && currentVale < 0) {
         currentVale = -currentVale;
     }
 

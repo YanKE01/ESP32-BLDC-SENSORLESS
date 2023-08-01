@@ -30,15 +30,12 @@ static void app_task(void *args)
     static uint8_t lock_count = 0;
     static double change_count = 0.0f;
 
-    while (1)
-    {
+    while (1) {
 
         // 打印日志
-        if (motorParameter.isStart == START && simpleOpen.runStep == 3)
-        {
+        if (motorParameter.isStart == START && simpleOpen.runStep == 3) {
             log_count++;
-            if (log_count == 100)
-            {
+            if (log_count == 100) {
                 log_count = 0;
                 ESP_LOGI(TAG, "-------------------------------------------------");
                 ESP_LOGI(TAG, "System Speed:%d,Target Speed:%d,duty:%lu", hallLessParameter.speedRpm, speedPid.SetPoint, motorParameter.pwmDuty);
@@ -49,11 +46,9 @@ static void app_task(void *args)
         }
 
         // 判断堵转标志是否成立
-        if (motorParameter.lock)
-        {
+        if (motorParameter.lock) {
             lock_count++;
-            if (lock_count == 10)
-            {
+            if (lock_count == 10) {
                 lock_count = 0;
                 motorParameter.isStart = START;
                 motorParameter.lock = 0;
@@ -63,14 +58,11 @@ static void app_task(void *args)
         }
 
         // 改变风速
-        if (simpleOpen.runStep == 3 && motorParameter.isStart == START)
-        {
-            switch (rmakerParameter.mode)
-            {
+        if (simpleOpen.runStep == 3 && motorParameter.isStart == START) {
+            switch (rmakerParameter.mode) {
             case NORMAL:
                 // 直接速度控制
-                if (speedPid.SetPoint != rmakerParameter.speed)
-                {
+                if (speedPid.SetPoint != rmakerParameter.speed) {
                     speedPid.SetPoint = rmakerParameter.speed; // 刷新速度
                 }
                 break;
@@ -100,8 +92,7 @@ static bool IRAM_ATTR bldc_main_loop_cb(gptimer_handle_t timer, const gptimer_al
     hal_bldc_main_loop();
 
     // PID运算
-    if (simpleOpen.runStep == 3 && motorParameter.isStart == START)
-    {
+    if (simpleOpen.runStep == 3 && motorParameter.isStart == START) {
         // 当前已经进入无感状态 应该等到速度稳定后介入PID控制
         xSemaphoreGive(xSemaphore);
     }
@@ -116,18 +107,13 @@ static bool IRAM_ATTR bldc_main_loop_cb(gptimer_handle_t timer, const gptimer_al
  */
 void app_pid_task(void *args)
 {
-    while (1)
-    {
-        if (xSemaphoreTake(xSemaphore, portMAX_DELAY) == pdTRUE)
-        {
+    while (1) {
+        if (xSemaphoreTake(xSemaphore, portMAX_DELAY) == pdTRUE) {
             int motor_pwm_t = app_pid_operation(&speedPid, hallLessParameter.speedRpm);
             /* 最低速度限制 */
-            if (motor_pwm_t > -200 && motor_pwm_t <= 0)
-            {
+            if (motor_pwm_t > -200 && motor_pwm_t <= 0) {
                 motor_pwm_t = -200;
-            }
-            else if (motor_pwm_t < 200 && motor_pwm_t > 0)
-            {
+            } else if (motor_pwm_t < 200 && motor_pwm_t > 0) {
                 motor_pwm_t = 200;
             }
 

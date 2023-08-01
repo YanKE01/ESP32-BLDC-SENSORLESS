@@ -264,7 +264,7 @@ void (*cwArray[6])(void) = {
 };
 
 /**
- * @description: 修改上管占空比
+ * @description: 修改上管占空比,当前的电机启动需要更大的电流.
  * @return {*}
  */
 void hal_bldc_change_voltage()
