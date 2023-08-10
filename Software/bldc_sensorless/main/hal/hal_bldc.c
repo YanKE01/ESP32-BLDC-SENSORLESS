@@ -1,15 +1,65 @@
 #include "hal_bldc.h"
 #include "driver/gpio.h"
 #include "driver/ledc.h"
+#include "esp_adc/adc_oneshot.h"
+#include "esp_adc/adc_cali.h"
+#include "esp_adc/adc_cali_scheme.h"
+#include "esp_log.h"
 #include "esp_err.h"
 #include "app_variable.h"
 #include "app_pid.h"
 
+const char *HAL_TAG = "HAL";
+
 ledc_channel_t lec_channel[3] = {LEDC_CHANNEL_0, LEDC_CHANNEL_1, LEDC_CHANNEL_2};
 SimpleOpen simpleOpen = {0, 0, 0, 0, 0};
 HallLessParameter hallLessParameter = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, 0, 0, 0, 0, 0, 0, 0, 0};
-int speedCount = 0;     // 用于统计高电平次数,计算速度
-int zeroStableFlag = 0; // 过零点稳定标志位
+int speedCount = 0;                   // 用于统计高电平次数,计算速度
+int zeroStableFlag = 0;               // 过零点稳定标志位
+adc_oneshot_unit_handle_t adc_handle; // ADC Handle
+bool do_calibration_vbus = false;     // ADC 校准
+adc_cali_handle_t adc_cali_vbus_handle = NULL;
+
+/**
+ * @brief
+ *
+ * @param unit
+ * @param channel
+ * @param atten
+ * @param out_handle
+ * @return true
+ * @return false
+ */
+static bool adc_calibration_init(adc_unit_t unit, adc_channel_t channel, adc_atten_t atten, adc_cali_handle_t *out_handle)
+{
+    adc_cali_handle_t handle = NULL;
+    esp_err_t ret = ESP_FAIL;
+    bool calibrated = false;
+    if (!calibrated) {
+        ESP_LOGI(HAL_TAG, "calibration scheme version is %s", "Curve Fitting");
+        adc_cali_curve_fitting_config_t cali_config = {
+            .unit_id = unit,
+            .chan = channel,
+            .atten = atten,
+            .bitwidth = ADC_BITWIDTH_DEFAULT,
+        };
+        ret = adc_cali_create_scheme_curve_fitting(&cali_config, &handle);
+        if (ret == ESP_OK) {
+            calibrated = true;
+        }
+    }
+
+    *out_handle = handle;
+    if (ret == ESP_OK) {
+        ESP_LOGI(HAL_TAG, "Calibration Success");
+    } else if (ret == ESP_ERR_NOT_SUPPORTED || !calibrated) {
+        ESP_LOGW(HAL_TAG, "eFuse not burnt, skip software calibration");
+    } else {
+        ESP_LOGE(HAL_TAG, "Invalid arg or no memory");
+    }
+
+    return calibrated;
+}
 
 /**
  * @description: 硬件初始化
@@ -68,7 +118,52 @@ void hal_bldc_hal_init()
         ESP_ERROR_CHECK(ledc_channel_config(&ledc_channel_cfg));
     }
 
+    // adc初始化
+    adc_oneshot_unit_init_cfg_t init_config = {
+        .unit_id = ADC_UNIT_1,
+    };
+    adc_oneshot_chan_cfg_t config = {
+        .bitwidth = ADC_BITWIDTH_DEFAULT,
+        .atten = ADC_ATTEN_DB_0,
+    };
+    ESP_ERROR_CHECK(adc_oneshot_new_unit(&init_config, &adc_handle));
+    ESP_ERROR_CHECK(adc_oneshot_config_channel(adc_handle, ADC_VBUS, &config));
+    do_calibration_vbus = adc_calibration_init(ADC_UNIT_1, ADC_VBUS, ADC_ATTEN_DB_0, &adc_cali_vbus_handle);
+
     hal_bldc_stop();
+}
+
+/**
+ * @brief 电源电压读取
+ *
+ */
+void hal_vbus_monitor()
+{
+    int adc_raw = 0;
+    int voltage = 0;
+    ESP_ERROR_CHECK(adc_oneshot_read(adc_handle, ADC_VBUS, &adc_raw));
+    if (do_calibration_vbus) {
+        ESP_ERROR_CHECK(adc_cali_raw_to_voltage(adc_cali_vbus_handle, adc_raw, &voltage));
+
+        // 判断是否过压/欠压
+        motorParameter.currentVbus = (voltage * (int)((R1 + R2) / R2)) / 1000.0f;
+        if (motorParameter.currentVbus > MAX_POWER || motorParameter.currentVbus < MIN_POWER) {
+            ESP_LOGE(HAL_TAG, "Vbus Error:%.2f", motorParameter.currentVbus);
+            hal_bldc_stop();
+            // 清空无感标志位
+            simpleOpen.runStep = 0;
+            simpleOpen.delayCount = 0;
+            simpleOpen.nextPhaseCount = 0;
+            simpleOpen.voltageChangeCount = 0;
+            hallLessParameter.stableFlag = 0;
+            hallLessParameter.filterFailedCount = 0;
+            speedPid.Ui = 0;
+            speedPid.SetPoint = 300;
+            motorParameter.changeIndex = 0;
+            motorParameter.pwmDuty = 0;
+            hal_flag_led(0);
+        }
+    }
 }
 
 /**
@@ -289,7 +384,7 @@ void hal_bldc_change_voltage()
         motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 5;
         break;
     case 7:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 6;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 5;
         break;
     case 8:
         motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 5;
@@ -298,7 +393,7 @@ void hal_bldc_change_voltage()
         motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 4;
         break;
     case 10:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 3;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 4;
         break;
     case 11:
         motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 2;
@@ -310,10 +405,10 @@ void hal_bldc_change_voltage()
         motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 2;
         break;
     case 14:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 5;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 4;
         break;
     case 15:
-        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 5;
+        motorParameter.pwmDuty = motorParameter.maxDuty / 2 / 4;
         break;
     default:
         break;
@@ -611,6 +706,7 @@ void hal_bldc_main_loop(void)
         speedPid.Ui = 0;
         speedPid.SetPoint = 300;
         motorParameter.changeIndex = 0;
+        motorParameter.pwmDuty = 0;
         hal_flag_led(0);
     }
 }

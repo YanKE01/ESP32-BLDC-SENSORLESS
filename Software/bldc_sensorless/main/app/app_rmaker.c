@@ -188,7 +188,7 @@ void app_rmaker_init()
     }
 
     /* 创建设备*/
-    fan_device = esp_rmaker_device_create("Fan", ESP_RMAKER_DEVICE_FAN, NULL);
+    fan_device = esp_rmaker_device_create("FanV3", ESP_RMAKER_DEVICE_FAN, NULL);
     esp_rmaker_device_add_cb(fan_device, app_rmaker_write_cb, NULL);
     // 添加控件-按钮 启动
     power_param = esp_rmaker_power_param_create(ESP_RMAKER_DEF_POWER_NAME, false);

@@ -31,7 +31,6 @@ static void app_task(void *args)
     static double change_count = 0.0f;
 
     while (1) {
-
         // 打印日志
         if (motorParameter.isStart == START && simpleOpen.runStep == 3) {
             log_count++;

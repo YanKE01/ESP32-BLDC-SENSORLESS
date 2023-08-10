@@ -26,6 +26,7 @@ typedef struct {
     uint16_t maxDuty;   // 最大占空比
     uint8_t lock;       // 堵转标志位
     int changeIndex;    // 调整索引
+    float currentVbus;  // 电源电压
 } MotorParameter;
 
 typedef struct {

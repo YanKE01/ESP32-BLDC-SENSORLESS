@@ -10,8 +10,9 @@
 
 /*定义位置PID参数相关宏*/
 /*PID结构体*/
-typedef struct {
-    int SetPoint;    /* 设定目标 */
+typedef struct
+{
+    int SetPoint;      /* 设定目标 */
     float ActualValue; /* 实际值 */
     float Ui;          /* 比例项 */
     float Up;          /* 积分项 */

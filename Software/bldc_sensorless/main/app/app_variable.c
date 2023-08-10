@@ -20,6 +20,7 @@ void app_variable_init(void)
     motorParameter.isStart = STOP;
     motorParameter.lock = 0;
     motorParameter.changeIndex = 0;
+    motorParameter.currentVbus = 0;
 
     /*Rmaker参数初始化.*/
     rmakerParameter.mode = NORMAL;
