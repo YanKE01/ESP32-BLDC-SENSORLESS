@@ -15,14 +15,20 @@
 #define HALL_2 GPIO_NUM_46
 #define HALL_3 GPIO_NUM_9
 
+#define ADC_VBUS ADC_CHANNEL_5
+
 #define _LEDC_TIMER LEDC_TIMER_0
 #define _LEDC_MODE LEDC_LOW_SPEED_MODE
 #define _LEDC_DUTY_RES LEDC_TIMER_11_BIT // Set duty resolution to 11 bits
 #define _LEDC_DUTY (2048 - 1)            // Duty Max = 2^11 = 2048
 #define _LEDC_FREQUENCY (20 * 1000)      // Frequency in Hertz. Set frequency at 20 kHz
 
-typedef struct
-{
+#define R1 (24 * 1000) // 24k
+#define R2 (1 * 1000)  // 1k
+#define MIN_POWER 10   // 10V
+#define MAX_POWER 14   // 14V
+
+typedef struct {
     /* data */
     int runStep;
     int delayCount;         // 延迟计数
@@ -31,8 +37,7 @@ typedef struct
     int voltageChangeCount; // 改变电压计数
 } SimpleOpen;
 
-typedef struct
-{
+typedef struct {
     /* data */
     uint8_t hallLessState[3];     // 三相反电动式状态
     uint16_t queueState[3];       // 三相滤波
@@ -44,6 +49,7 @@ typedef struct
     uint8_t hallLessValue;        // 三相反电势状态组合值
     uint8_t hallLessValuePrev;    // 三相反电势状态组合值,前一时刻
     int stableFlag;               // 稳定状态
+    int errorHallLessCount;       // 错误的无感计数
 } HallLessParameter;
 
 extern HallLessParameter hallLessParameter;
@@ -55,5 +61,6 @@ void hal_bldc_test(void);
 void hal_bldc_stop();
 void hal_flag_led(uint8_t status);
 void hal_bldc_main_loop(void);
+void hal_vbus_monitor();
 
 #endif
